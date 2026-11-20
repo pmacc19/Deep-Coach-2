@@ -1,0 +1,1332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="color-scheme" content="light dark">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Skills Coach</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #0D0D0D;
+    --surface:   #161616;
+    --surfaceAlt:#1C1C1C;
+    --border:    #2A2A2A;
+    --amber:     #C8963E;
+    --amberSoft: rgba(200,150,62,0.09);
+    --amberGlow: rgba(200,150,62,0.2);
+    --slate:     #4A6080;
+    --slateSoft: rgba(74,96,128,0.09);
+    --text:      #F0EDE6;
+    --muted:     #888880;
+    --dim:       #444440;
+    --mono:      'Courier New', 'Lucida Console', monospace;
+    --serif:     Georgia, 'Times New Roman', serif;
+    --sans:      system-ui, -apple-system, sans-serif;
+  }
+
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg:        #F7F5F0;
+      --surface:   #EDEBE5;
+      --surfaceAlt:#E3E0D8;
+      --border:    #D0CCBF;
+      --amber:     #9B6E1E;
+      --amberSoft: rgba(155,110,30,0.08);
+      --amberGlow: rgba(155,110,30,0.18);
+      --slate:     #3A5070;
+      --slateSoft: rgba(58,80,112,0.08);
+      --text:      #1A1814;
+      --muted:     #5A5750;
+      --dim:       #9A9790;
+    }
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  #app { height: 100%; }
+
+  /* ── Screens ── */
+  .screen { display: none; }
+  .screen.active { display: flex; }
+
+  /* ── Intro screen ── */
+  #screen-intro {
+    min-height: 100dvh;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1.5rem;
+  }
+  #screen-intro .inner { max-width: 520px; width: 100%; }
+  .eyebrow {
+    font-size: 0.7rem; letter-spacing: 0.14em;
+    color: var(--amber); text-transform: uppercase;
+    font-weight: 600; margin-bottom: 1.25rem;
+  }
+  #screen-intro h1 {
+    font-family: var(--serif); font-size: 2rem;
+    font-weight: 400; line-height: 1.2;
+    margin-bottom: 1.25rem; color: var(--text);
+  }
+  #screen-intro p.lead {
+    color: var(--muted); line-height: 1.8;
+    margin-bottom: 2rem; font-size: 0.95rem;
+  }
+  .phase-list {
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 2rem;
+  }
+  .phase-item {
+    display: flex; gap: 1rem; align-items: baseline;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .phase-item:last-child { border-bottom: none; }
+  .phase-num {
+    font-family: var(--mono); font-size: 0.85rem;
+    color: var(--amber); flex-shrink: 0; width: 18px;
+  }
+  .phase-name { font-size: 0.85rem; color: var(--text); font-weight: 500; }
+  .small-note {
+    color: var(--dim); font-size: 0.8rem;
+    line-height: 1.6; margin-bottom: 2rem;
+  }
+  .btn-primary {
+    background: var(--amber); color: #0D0D0D;
+    border: none; border-radius: 6px;
+    padding: 0.85rem 2rem; font-size: 0.9rem;
+    font-weight: 700; cursor: pointer;
+    font-family: var(--sans); -webkit-appearance: none;
+  }
+  .btn-primary:active { opacity: 0.85; }
+
+  /* ── Password screen ── */
+  #screen-password {
+    min-height: 100dvh;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1.5rem;
+  }
+  #screen-password .inner { max-width: 360px; width: 100%; }
+  #screen-password h1 {
+    font-family: var(--serif); font-size: 1.6rem;
+    font-weight: 400; margin-bottom: 0.75rem; color: var(--text);
+  }
+  #screen-password p {
+    color: var(--muted); font-size: 0.9rem;
+    line-height: 1.6; margin-bottom: 2rem;
+  }
+  #password-input {
+    width: 100%; background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px; padding: 0.85rem 1rem;
+    color: var(--text); font-size: 1rem;
+    font-family: var(--sans); margin-bottom: 0.75rem;
+    -webkit-appearance: none; box-sizing: border-box;
+  }
+  #password-input:focus { outline: none; border-color: var(--amber); }
+  #password-error {
+    color: #B03020; font-size: 0.82rem;
+    margin-bottom: 0.75rem; display: none;
+    font-family: var(--sans);
+  }
+  #password-error.visible { display: block; }
+
+  /* ── API Key screen ── */
+  #screen-apikey {
+    min-height: 100dvh;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1.5rem;
+  }
+  #screen-apikey .inner { max-width: 360px; width: 100%; }
+  #screen-apikey h1 {
+    font-family: var(--serif); font-size: 1.6rem;
+    font-weight: 400; margin-bottom: 0.75rem; color: var(--text);
+  }
+  #screen-apikey p {
+    color: var(--muted); font-size: 0.9rem;
+    line-height: 1.6; margin-bottom: 1.5rem;
+  }
+  #apikey-input {
+    width: 100%; background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px; padding: 0.85rem 1rem;
+    color: var(--text); font-size: 0.85rem;
+    font-family: var(--mono); margin-bottom: 0.75rem;
+    -webkit-appearance: none; box-sizing: border-box;
+  }
+  #apikey-input:focus { outline: none; border-color: var(--amber); }
+  #apikey-error {
+    color: #B03020; font-size: 0.82rem;
+    margin-bottom: 0.75rem; display: none;
+    font-family: var(--sans);
+  }
+  #apikey-error.visible { display: block; }
+  .apikey-note {
+    font-size: 0.78rem; color: var(--dim);
+    line-height: 1.5; margin-top: 1rem;
+    font-family: var(--sans);
+  }
+
+  /* ── Session screen ── */
+  #screen-session {
+    flex-direction: column;
+    height: 100dvh;
+    overflow: hidden;
+  }
+
+  /* Phase bar */
+  #phase-bar {
+    position: sticky; top: 0; z-index: 10;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    padding: 0.5rem 1.5rem;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  #phase-bar::-webkit-scrollbar { display: none; }
+  .phase-crumb {
+    display: inline-flex; align-items: center;
+    gap: 0.35rem; margin-right: 0.35rem;
+  }
+  .phase-crumb-label {
+    font-size: 0.72rem; font-family: var(--sans);
+    color: var(--dim); letter-spacing: 0.03em;
+  }
+  .phase-crumb-label.active { color: var(--text); font-weight: 600; }
+  .phase-crumb-label.done { color: var(--amber); opacity: 0.7; }
+  .phase-sep { font-size: 0.65rem; color: var(--dim); }
+
+  /* Messages area */
+  #messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 2rem 1.5rem 1rem;
+    -webkit-overflow-scrolling: touch;
+  }
+  #messages-inner { max-width: 660px; margin: 0 auto; }
+
+  .msg { margin-bottom: 1.75rem; animation: fadeUp 0.25s ease; }
+  .msg-label {
+    font-size: 0.7rem; font-family: var(--sans);
+    color: var(--dim); letter-spacing: 0.08em;
+    text-transform: uppercase; margin-bottom: 0.6rem;
+  }
+  .msg-coach p {
+    font-family: var(--serif); font-size: 1.05rem;
+    line-height: 1.8; color: var(--text); font-weight: 400;
+  }
+  .msg-user {
+    padding-left: 1.5rem;
+    border-left: 2px solid var(--border);
+  }
+  .msg-user p {
+    font-family: var(--mono); font-size: 0.9rem;
+    line-height: 1.75; color: var(--muted);
+  }
+
+  /* Tension / Assumption flags */
+  .flag {
+    display: flex; align-items: flex-start; gap: 0.5rem;
+    border-radius: 6px; padding: 0.5rem 0.75rem;
+    margin: 0.5rem 0; font-size: 0.78rem;
+    font-family: var(--sans); line-height: 1.5;
+  }
+  .flag-tension {
+    background: var(--amberSoft);
+    border: 1px solid var(--amberGlow);
+    color: var(--amber);
+  }
+  .flag-assumption {
+    background: var(--slateSoft);
+    border: 1px solid rgba(74,96,128,0.25);
+    color: var(--slate);
+  }
+  .flag-label { flex-shrink: 0; font-weight: 700; }
+  .flag-text { color: var(--muted); }
+
+  /* Typing dots */
+  #typing {
+    display: none;
+    gap: 5px; padding: 0.5rem 0 1rem;
+    align-items: center;
+  }
+  #typing.visible { display: flex; }
+  .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--dim);
+  }
+  .dot:nth-child(1) { animation: blink 1.2s ease 0s infinite; }
+  .dot:nth-child(2) { animation: blink 1.2s ease 0.2s infinite; }
+  .dot:nth-child(3) { animation: blink 1.2s ease 0.4s infinite; }
+
+  /* Ready for synthesis banner */
+  #synthesis-ready {
+    display: none;
+    background: var(--amberSoft);
+    border: 1px solid var(--amberGlow);
+    border-radius: 8px; padding: 1.25rem 1.5rem;
+    margin: 1rem 0;
+  }
+  #synthesis-ready.visible { display: block; }
+  #synthesis-ready p {
+    font-family: var(--serif); font-size: 1rem;
+    color: var(--text); line-height: 1.7; margin-bottom: 1rem;
+  }
+
+  /* Input bar */
+  #input-bar {
+    border-top: 1px solid var(--border);
+    padding: 1rem 1.5rem;
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+    background: var(--bg);
+  }
+  #input-bar-inner {
+    max-width: 660px; margin: 0 auto;
+    display: flex; gap: 0.75rem; align-items: flex-end;
+  }
+  #user-input {
+    flex: 1; background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px; padding: 0.85rem 1rem;
+    color: var(--text); font-size: 0.9rem;
+    font-family: var(--mono); line-height: 1.65;
+    resize: none; -webkit-appearance: none;
+    min-height: 80px;
+  }
+  #user-input:focus { outline: none; border-color: var(--amber); }
+  #user-input::placeholder { color: var(--dim); }
+  .btn-col { display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-end; }
+  #btn-send {
+    background: var(--surfaceAlt); color: var(--dim);
+    border: none; border-radius: 6px;
+    padding: 0.6rem 1.1rem; font-size: 0.85rem;
+    font-weight: 700; cursor: pointer;
+    font-family: var(--sans); white-space: nowrap;
+    -webkit-appearance: none; transition: background 0.15s, color 0.15s;
+  }
+  #btn-send.ready { background: var(--amber); color: #0D0D0D; }
+  #btn-send:active { opacity: 0.85; }
+  #btn-synth-now, #btn-notes {
+    background: transparent; color: var(--dim);
+    border: 1px solid var(--border); border-radius: 6px;
+    padding: 0.45rem 0.8rem; font-size: 0.72rem;
+    cursor: pointer; font-family: var(--sans);
+    white-space: nowrap; -webkit-appearance: none;
+  }
+  #input-hint {
+    font-size: 0.72rem; color: var(--dim);
+    margin-top: 0.5rem; font-family: var(--sans);
+  }
+
+  /* ── Synthesis screen ── */
+  #screen-synthesis, #screen-notes {
+    flex-direction: column;
+    min-height: 100dvh;
+    padding: 3rem 1.5rem 5rem;
+    overflow-y: auto;
+  }
+  #screen-synthesis .inner, #screen-notes .inner { max-width: 660px; margin: 0 auto; width: 100%; }
+  .synth-header {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 1.5rem; margin-bottom: 2.5rem;
+  }
+  .synth-header h1 {
+    font-family: var(--serif); font-size: 1.8rem;
+    font-weight: 400; color: var(--text);
+  }
+  .spinner-wrap { text-align: center; padding: 4rem 0; }
+  .spinner {
+    width: 32px; height: 32px;
+    border: 2px solid var(--border);
+    border-top: 2px solid var(--amber);
+    border-radius: 50%; margin: 0 auto 1.5rem;
+    animation: spin 1s linear infinite;
+  }
+  .spinner-wrap p { color: var(--muted); font-family: var(--serif); }
+  .synth-sections { display: flex; flex-direction: column; gap: 2.5rem; }
+  .synth-section {
+    border-left: 2px solid var(--border);
+    padding-left: 1.5rem;
+  }
+  .synth-section.highlight { border-left-color: var(--amber); }
+  .synth-section-label {
+    font-size: 0.68rem; letter-spacing: 0.1em;
+    color: var(--dim); text-transform: uppercase;
+    font-weight: 600; margin-bottom: 0.75rem;
+  }
+  .synth-section.highlight .synth-section-label { color: var(--amber); }
+  .synth-section-content {
+    font-family: var(--serif); font-size: 1rem;
+    line-height: 1.85; color: var(--text);
+    white-space: pre-wrap;
+  }
+  .synth-note {
+    background: var(--amberSoft);
+    border: 1px solid var(--amberGlow);
+    border-radius: 8px; padding: 1.25rem 1.5rem;
+  }
+  .synth-note p { color: var(--muted); font-size: 0.85rem; line-height: 1.6; }
+  .synth-actions { display: flex; gap: 1rem; flex-wrap: wrap; }
+  #btn-copy {
+    background: var(--amber); color: #0D0D0D;
+    border: none; border-radius: 6px;
+    padding: 0.7rem 1.4rem; font-size: 0.85rem;
+    font-weight: 700; cursor: pointer;
+    font-family: var(--sans); -webkit-appearance: none;
+  }
+  #btn-restart {
+    background: transparent; color: var(--muted);
+    border: 1px solid var(--border); border-radius: 6px;
+    padding: 0.7rem 1.4rem; font-size: 0.85rem;
+    cursor: pointer; font-family: var(--sans);
+    -webkit-appearance: none;
+  }
+
+    /* ── Skills coach additions ── */
+  .btn-ghost {
+    background: transparent; color: var(--muted);
+    border: 1px solid var(--border); border-radius: 6px;
+    padding: 0.7rem 1.4rem; font-size: 0.85rem;
+    cursor: pointer; font-family: var(--sans);
+    -webkit-appearance: none;
+  }
+  .btn-ghost:active { opacity: 0.85; }
+  .btn-row { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1.5rem; }
+  .error-text { color: var(--muted); font-family: var(--serif); line-height: 1.7; }
+
+  #resume-block {
+    display: none;
+    border: 1px solid var(--amberGlow);
+    background: var(--amberSoft);
+    border-radius: 8px; padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+  #resume-block.visible { display: block; }
+  #resume-block p {
+    color: var(--muted); font-size: 0.85rem;
+    line-height: 1.6; margin-bottom: 0.75rem;
+  }
+
+  details.notes-paste { margin-bottom: 1.5rem; }
+  details.notes-paste summary {
+    cursor: pointer; color: var(--amber);
+    font-size: 0.85rem; font-family: var(--sans);
+  }
+  #prior-notes {
+    width: 100%; min-height: 140px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px; padding: 0.85rem 1rem;
+    color: var(--text); font-size: 1rem;
+    font-family: var(--mono); line-height: 1.6;
+    resize: vertical; -webkit-appearance: none;
+    margin-top: 0.75rem;
+  }
+  #prior-notes:focus { outline: none; border-color: var(--amber); }
+
+  .notes-hint {
+    color: var(--muted); font-size: 0.85rem;
+    line-height: 1.6; margin-bottom: 1.25rem;
+  }
+  .notes-text {
+    font-family: var(--mono); font-size: 0.85rem;
+    line-height: 1.7; white-space: pre-wrap;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px; padding: 1.25rem;
+    color: var(--text); word-break: break-word;
+  }
+
+  .msg.notice {
+    border: 1px solid var(--amberGlow);
+    background: var(--amberSoft);
+    border-radius: 8px; padding: 0.85rem 1rem;
+  }
+  .msg.notice p {
+    color: var(--amber); font-size: 0.88rem;
+    font-family: var(--sans); line-height: 1.6;
+  }
+  .notice-btn { margin-top: 0.75rem; padding: 0.5rem 1rem; }
+
+
+  /* ── Animations ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.2; }
+  }
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ── PASSWORD SCREEN ── -->
+  <div id="screen-password" class="screen active">
+    <div class="inner">
+      <div class="eyebrow">Skills Coach</div>
+      <h1>Enter passphrase to continue</h1>
+      <p>This tool is private. Enter your passphrase to access it.</p>
+      <input type="password" id="password-input" placeholder="Passphrase" />
+      <div id="password-error">Incorrect passphrase. Please try again.</div>
+      <button class="btn-primary" id="btn-unlock">Unlock</button>
+    </div>
+  </div>
+
+  <!-- ── API KEY SCREEN ── -->
+  <div id="screen-apikey" class="screen">
+    <div class="inner">
+      <div class="eyebrow">Skills Coach</div>
+      <h1>Enter your API key</h1>
+      <p>Your key is held in memory only for this session. It is never saved to disk or sent anywhere except Anthropic's API.</p>
+      <input type="password" id="apikey-input" placeholder="sk-ant-..." />
+      <div id="apikey-error">That does not look like a valid Anthropic API key. It should start with sk-ant-</div>
+      <button class="btn-primary" id="btn-apikey-submit">Continue</button>
+      <p class="apikey-note">Get your key at console.anthropic.com &rarr; API Keys</p>
+    </div>
+  </div>
+
+  <!-- ── INTRO SCREEN ── -->
+  <div id="screen-intro" class="screen">
+    <div class="inner">
+      <div class="eyebrow">Core Skills Coach</div>
+      <h1>Find the skills that come easily to you and that you can prove</h1>
+      <p class="lead">
+        Not a personality test. A structured interrogation of your own
+        evidence, aimed at the transferable skills that recur across your
+        life. No outside feedback needed. Every claim is graded Supported,
+        Plausible or Unverified, and nothing is upgraded without new evidence.
+      </p>
+      <div id="resume-block">
+        <p>A saved session was found on this device.</p>
+        <button class="btn-primary" id="btn-resume">Resume session</button>
+      </div>
+      <div class="phase-list" id="phase-list-intro"></div>
+      <details class="notes-paste">
+        <summary>Continuing from earlier sessions? Paste your notes</summary>
+        <textarea id="prior-notes" placeholder="Paste SESSION NOTES here..."></textarea>
+      </details>
+      <p class="small-note">
+        Sessions run about 12 to 15 exchanges. Tap Save notes to get a
+        record you can paste in next time. Full sentences work better than
+        fragments. Passion is tracked quietly and only reported if it recurs.
+      </p>
+      <button class="btn-primary" id="btn-begin">Begin</button>
+    </div>
+  </div>
+
+  <!-- ── SESSION SCREEN ── -->
+  <div id="screen-session" class="screen">
+    <div id="phase-bar"></div>
+    <div id="messages">
+      <div id="messages-inner">
+        <div id="typing">
+          <div class="dot"></div>
+          <div class="dot"></div>
+          <div class="dot"></div>
+        </div>
+        <div id="synthesis-ready">
+          <p>The session is complete. Ready to build your core skills profile from all six phases.</p>
+          <button class="btn-primary" id="btn-go-synth">Generate synthesis</button>
+        </div>
+      </div>
+    </div>
+    <div id="input-bar">
+      <div id="input-bar-inner">
+        <textarea id="user-input" placeholder="Answer here..." rows="3"></textarea>
+        <div class="btn-col">
+          <button id="btn-send">Send</button>
+          <button id="btn-notes">Save notes</button>
+          <button id="btn-synth-now">Synthesise now</button>
+        </div>
+      </div>
+      <div id="input-hint">Tap Send or use Return. Concrete examples beat generalities.</div>
+    </div>
+  </div>
+
+  <!-- ── NOTES SCREEN ── -->
+  <div id="screen-notes" class="screen">
+    <div class="inner">
+      <div class="synth-header">
+        <div class="eyebrow">Session notes</div>
+        <h1>Save these for next time</h1>
+      </div>
+      <div id="notes-body"></div>
+    </div>
+  </div>
+
+  <!-- ── SYNTHESIS SCREEN ── -->
+  <div id="screen-synthesis" class="screen">
+    <div class="inner">
+      <div class="synth-header">
+        <div class="eyebrow">Synthesis</div>
+        <h1>Your skills profile</h1>
+      </div>
+      <div id="synth-body"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── Constants ────────────────────────────────────────────────────────
+const PHASES = [
+  { id: "stories",     label: "Stories",                  n: "1" },
+  { id: "extract",     label: "Skill Extraction",         n: "2" },
+  { id: "ease",        label: "Ease and Rarity",          n: "3" },
+  { id: "reliability", label: "Reliability Check",        n: "4" },
+  { id: "tensions",    label: "Tensions and Assumptions", n: "5" },
+  { id: "energy",      label: "Energy and Passion",       n: "6" },
+  { id: "synthesis",   label: "Synthesis",                n: "7" },
+];
+
+const SYSTEM_PROMPT = [
+  "You are a rigorous, evidence-first skills coach. Your job is to help this person find their fundamental transferable skills: the core things that come naturally to them, that other people tend to find hard, and that they could carry into many different careers. The goal is an accurate, evidence-graded picture of their core skills and abilities. Do not advise on employers, roles or career moves; they will handle that case by case. A secondary, lower-priority goal is to notice, never chase, whether they have a genuine passion.",
+  "",
+  "ABOUT THE PERSON",
+  "- They have ADHD and mask heavily in professional and social life, so other people's feedback reflects their performance, not them. Never suggest asking colleagues, friends or family for feedback. If they mention records they already have (written praise, past reviews, work they produced, any strengths or personality assessment results), you may ask about those and treat them as one input to be tested, not as proof.",
+  "- They want honest pushback, not flattery. If a claim rests on their say-so alone, say so. Label anything that is your own inference as 'my inference'.",
+  "- You are a coach, not a clinician. Do not diagnose or advise on treatment or medication. If they show distress beyond the exercise, stop, check in, and suggest talking to a professional.",
+  "- Be straight about limits: without outside data nobody can prove from a chat that a skill is rare. Grade the evidence instead of pretending certainty.",
+  "",
+  "WORKING DEFINITION OF A CORE SKILL",
+  "Borrowed vocabulary from Gallup's CliftonStrengths model (used as definitions, not as an assessment): a talent is a naturally recurring pattern of thought, feeling or behaviour that can be productively applied; investment is time spent practising and building skills and knowledge; a strength is the ability to deliver consistent, near-perfect performance in a specific activity (talent multiplied by investment). Note that this model's psychometric evidence comes mostly from Gallup itself, so treat it as a vocabulary and a set of prompts, not as proof.",
+  "A candidate counts as a core skill only if it can be tested through dialogue against these six tests:",
+  "1. RECURRENCE: it appears in at least three unrelated situations or stories.",
+  "2. SPECIFICITY: it can be described as a task-level verb phrase with observable steps, not a personality label. 'Analytical' fails; 'turn a messy set of numbers into the three questions a decision-maker needs answered' passes.",
+  "3. EASE SIGNALS: immediate or spontaneous reactions to the task, starting without effort, learning it fast, losing track of time, real satisfaction afterwards, early glimpses of excellence. These point to talent rather than hard-won competence.",
+  "4. CONSISTENCY: repeated good outcomes in that specific task, including the occasions when it did not go well. One great result is not a pattern.",
+  "5. COMPARATIVE EDGE: concrete, observable instances of others struggling with, or approaching differently, the same task. Grade it Supported, Plausible or Unverified. People tend to assume others think and know what they do (the false consensus and curse-of-knowledge effects), so a claim that everyone else finds it hard stays Unverified without concrete examples. That this applies to abilities, not just knowledge and beliefs, is your inference.",
+  "6. RELIABILITY: it can be delivered on demand, and you know the conditions under which it does and does not appear.",
+  "Also separate talent from investment. Ask how much came naturally and how much was built through practice. Heavy investment with no ease signals is a competence, not the easy-for-me core skill being sought. Strong ease signals with little investment is raw potential, not yet a proven strength. Report both honestly.",
+  "",
+  "SOURCES AND HOW TO USE THEM",
+  "1. What Color Is Your Parachute (Richard Bolles): the seven-stories method. Collect moments they enjoyed and did well, work or non-work, and mine them for verbs. Skills that recur across stories rank highest. Separate functional or transferable skills (verbs), work-content knowledge, and self-management traits. Adapt the method in your own words.",
+  "2. Edward Hallowell (with John Ratey, ADHD 2.0 and earlier books): a strengths-based lens. What are they really good at, what makes them lose track of time, what is their right difficult (a challenge hard enough to engage them that they have real talent for), and how do people and environment affect them. Use this to find skills and passion signals.",
+  "3. Russell Barkley: a performance model. ADHD is mainly a problem of doing what you know at the point of performance, not of not knowing what to do. Relevant executive functions include self-restraint, working memory, emotional and motivational self-regulation, and planning. Time blindness and the need for external structure matter. Barkley is critical of superpower framing, so use him as the reality check on test 6.",
+  "4. Hallowell and Barkley differ in emphasis. Do not smooth that over. Use Hallowell to find skills and Barkley to stress-test them.",
+  "5. Earlier frameworks: Ikigai (love, good at, needed, paid for); Genius Zone (skills they are competent at but drained by, versus skills that energise them); Design Your Life (treat conclusions as prototypes to test); Strengths-Skills-Market; the Mom Test (ask about specific past behaviour, not opinions).",
+  "",
+  "THE PHASES (work through in order; do not announce the phase unless asked; stay in a phase until you have enough evidence)",
+  "PHASE 1, stories: collect up to seven specific stories, one at a time, work and non-work. For each get the situation, what they actually did step by step, who else was involved and what they were doing or struggling with, the outcome, and how it felt during and afterwards. Prefer unperformed moments, things done when nobody was watching or judging. Do not name their skills for them yet.",
+  "PHASE 2, extract (tests 1 and 2): after three or more stories, name candidate skills as task-level verb phrases, quote their own words as evidence, and ask them to confirm, reject or reword each. Classify each as a functional skill, knowledge, or self-management trait. Track which recur across unrelated stories. Drop anything that fails recurrence or specificity.",
+  "PHASE 3, ease (tests 3 and 5): for each surviving candidate ask what exactly is easy about it, step by step, and probe the ease signals one at a time. Ask for concrete examples of others struggling with the same task, what those people did, and what they did differently. Ask where it is not easy or where others do it better. Probe the curse of knowledge: what do they assume a typical person would do, and how do they know? Ask how much was natural versus built. Grade comparative edge Supported, Plausible or Unverified. Never upgrade a grade without new evidence.",
+  "PHASE 4, reliability (tests 4 and 6, Barkley): ask about the occasions each skill went well and the occasions it did not. Does it show up reliably or only under certain conditions such as interest, urgency, novelty, deadlines, accountability to another person, solo or team work? What external structure was present when it worked, and what happened when it was missing? Where are the failure points (starting, finishing, time, follow-through, emotional regulation)? Separate can do from can do on demand.",
+  "PHASE 5, tensions: surface contradictions across their answers without resolving them tidily. Challenge every I-couldn't-because and every constraint treated as fixed, separating real limits from limits absorbed from other people's expectations. Check for skills they are good at but find hollow versus skills that energise them.",
+  "PHASE 6, energy: cover what energises and what drains them, the subject areas they are drawn to, and what they care about. Review the passion signals you have been tracking.",
+  "THROUGHOUT: keep a private running list of anything that produced real energy, hyperfocus or lost time. Surface it in phase 6 and in the synthesis. Do not steer them towards finding a passion. If there is no clear signal, say so.",
+  "",
+  "RULES",
+  "- One question at a time. Never list several questions in one message.",
+  "- Plain prose only in coaching messages. No bullet points, headers or bold.",
+  "- Demand a concrete example before accepting any claim about what they are good at.",
+  "- Be direct and specific. Never validate without a basis. Push back on vague, performed or suspiciously tidy answers. You may be warm but never soft.",
+  "- No generic career advice. Everything must come from what they have actually told you.",
+  "",
+  "APP PROTOCOL",
+  "- End every reply with a tag on its own final line showing the current phase, exactly one of: [PHASE: stories] [PHASE: extract] [PHASE: ease] [PHASE: reliability] [PHASE: tensions] [PHASE: energy]. The app hides this tag.",
+  "- To flag a contradiction, start the reply with [TENSION: one sentence]. To challenge a stated constraint, start with [ASSUMPTION: one sentence]. Then continue in plain prose.",
+  "- The first user message either says they are ready to start (then give a one-sentence introduction and your first phase 1 question) or contains SESSION NOTES from earlier sessions (then recap in two or three sentences and continue from PICK UP FROM HERE without repeating covered ground).",
+  "- Sessions are short. After roughly 12 to 15 exchanges in a session, say once that this is a good place to stop and that they can tap Save notes, then continue if they want.",
+  "- When all six phases are complete and there is enough evidence, write one sentence of wrap-up and then [READY_FOR_SYNTHESIS] on its own line.",
+].join("\n");
+
+const NOTES_PROMPT = [
+  "You write session notes for a skills-coaching process. You are given the transcript of the current session and, if there are any, notes from earlier sessions. Produce notes that let a fresh coach continue exactly where this one stopped.",
+  "Use plain text only. No markdown symbols such as asterisks or hash signs. Use exactly these labels, each on its own line, in this order:",
+  "",
+  "SESSION NOTES - Session [number]",
+  "STORIES COLLECTED: one line per story, in the person's own terms.",
+  "CANDIDATE SKILLS: for each, the skill as a task-level verb phrase; the evidence in the person's own words; then its status on each test: recurrence (how many unrelated stories), ease signals seen, consistency of outcomes, comparative edge grade (Supported, Plausible or Unverified) with the reason, reliability findings; and how much was natural versus built.",
+  "CANDIDATES DROPPED: skills that failed a test, and which test.",
+  "TENSIONS FLAGGED:",
+  "ASSUMPTIONS CHALLENGED: and how the person responded.",
+  "PASSION SIGNALS SO FAR: only repeated energy or hyperfocus; write none yet if there is none.",
+  "CONDITIONS THAT HELP OR HURT SO FAR:",
+  "PHASE REACHED:",
+  "PICK UP FROM HERE: two or three sentences addressed to the next coach: what is covered, what is unresolved, and the single most useful next question.",
+  "",
+  "If earlier notes are provided, merge them: carry earlier content forward, number this session one higher than the latest earlier session, and change a grade only when this session gave new evidence. Do not invent anything that is not in the notes or transcript.",
+].join("\n");
+
+const SYNTHESIS_PROMPT = [
+  "You are producing the final core-skills profile from a skills-coaching process. You are given the transcript of the latest session and, if there are any, notes from earlier sessions. Be honest, specific and evidence-based. Do not inflate or flatter. Do not give advice about employers, roles or career moves. Use plain text only: no markdown symbols such as asterisks or hash signs, and no bullet characters. Use short paragraphs or numbered lines.",
+  "",
+  "A core skill must be a task-level verb phrase that passed these tests in the person's own evidence: recurrence across at least three unrelated situations, specificity, ease signals, consistency of outcomes, comparative edge, and reliability. Never present a skill as proven to be rare unless concrete examples support it.",
+  "",
+  "Produce exactly these five sections, each starting with its heading on its own line followed by a colon:",
+  "",
+  "CORE SKILLS:",
+  "The person's ranked core skills. For each: the task-level verb phrase; what it looks like in practice; the evidence from their own words; result on each test (recurrence, ease signals, consistency, comparative edge graded Supported, Plausible or Unverified, reliability); and how much was natural versus built.",
+  "",
+  "WHEN EACH SKILL SHOWS UP RELIABLY:",
+  "For each core skill, the conditions under which it appeared reliably and the conditions under which it faltered, based on the reliability evidence.",
+  "",
+  "CANDIDATES THAT DID NOT HOLD UP:",
+  "Skills that were considered but failed a test, including competent-but-draining skills and skills built mostly through investment, and which test they failed.",
+  "",
+  "PASSION SIGNALS:",
+  "Only what genuinely recurred, with the evidence. If nothing did, say so plainly.",
+  "",
+  "WHAT IS STILL UNPROVEN AND HOW TO TEST IT:",
+  "Every skill still graded Plausible or Unverified on any test, each with a cheap, low-exposure way to test it that does not require asking other people (for example a short self-observation log, a small experiment in the current job, or reviewing records the person already has).",
+].join("\n");
+
+const SECTION_KEYS = [
+  "CORE SKILLS",
+  "WHEN EACH SKILL SHOWS UP RELIABLY",
+  "CANDIDATES THAT DID NOT HOLD UP",
+  "PASSION SIGNALS",
+  "WHAT IS STILL UNPROVEN AND HOW TO TEST IT",
+];
+
+
+const STORAGE_KEY = "skills-coach-session-v1";
+
+// API key is entered at runtime, never hardcoded
+let runtimeApiKey = "";
+
+function getApiHeaders() {
+  return {
+    "Content-Type": "application/json",
+    "anthropic-version": "2023-06-01",
+    "anthropic-dangerous-direct-browser-access": "true",
+    "x-api-key": runtimeApiKey,
+  };
+}
+
+// ── State ────────────────────────────────────────────────────────────
+function defaultState() {
+  return {
+    messages: [],
+    currentPhaseId: "stories",
+    exchangeCount: 0,
+    readyForSynthesis: false,
+    synthesis: "",
+    synthesisAt: -1,
+    notes: "",
+    priorNotes: "",
+  };
+}
+
+let state = defaultState();
+let busy = false;
+
+function saveState() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+}
+function loadState() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const s = JSON.parse(raw);
+      if (s && Array.isArray(s.messages)) state = Object.assign(defaultState(), s);
+    }
+  } catch (e) {}
+}
+function clearState() {
+  try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+}
+
+// ── DOM helpers ──────────────────────────────────────────────────────
+function el(id) { return document.getElementById(id); }
+
+function showScreen(name) {
+  document.querySelectorAll(".screen").forEach(s => s.classList.remove("active"));
+  el("screen-" + name).classList.add("active");
+}
+
+function scrollToBottom() {
+  const msgs = el("messages");
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function makeBtn(label, cls, onclick) {
+  const b = document.createElement("button");
+  b.className = cls;
+  b.textContent = label;
+  b.onclick = onclick;
+  return b;
+}
+
+function copyText(text, btn, idleLabel) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => {
+      btn.textContent = "Copied";
+      setTimeout(() => { btn.textContent = idleLabel; }, 2000);
+    }).catch(() => { btn.textContent = "Copy failed - select the text instead"; });
+  } else {
+    btn.textContent = "Copy not available - select the text instead";
+  }
+}
+
+// ── Parsing ──────────────────────────────────────────────────────────
+function parseTensions(text) {
+  const tensions = [];
+  const cleaned = text
+    .replace(/\[TENSION: ([^\]]+)\]/g, (_, t) => { tensions.push({ type: "tension", text: t }); return ""; })
+    .replace(/\[ASSUMPTION: ([^\]]+)\]/g, (_, t) => { tensions.push({ type: "assumption", text: t }); return ""; })
+    .trim();
+  return { cleaned, tensions };
+}
+
+function extractTags(text) {
+  const m = text.match(/\[PHASE:\s*([a-z]+)\]/i);
+  let cleaned = text.replace(/\[PHASE:\s*[a-z]+\]/gi, "").trim();
+  const ready = cleaned.indexOf("[READY_FOR_SYNTHESIS]") !== -1;
+  cleaned = cleaned.replace(/\[READY_FOR_SYNTHESIS\]/g, "").trim();
+  return { phaseId: m ? m[1].toLowerCase() : null, cleaned: cleaned, ready: ready };
+}
+
+function parseSynthesisSections(rawText) {
+  const text = rawText.replace(/\*\*/g, "").replace(/^#+\s*/gm, "");
+  const found = [];
+  SECTION_KEYS.forEach(key => {
+    const idx = text.indexOf(key + ":");
+    if (idx !== -1) found.push({ key: key, start: idx, contentStart: idx + key.length + 1 });
+  });
+  found.sort((a, b) => a.start - b.start);
+  const sections = found.map((f, i) => ({
+    label: f.key,
+    content: text.slice(f.contentStart, i + 1 < found.length ? found[i + 1].start : text.length).trim(),
+  }));
+  if (sections.length === 0) sections.push({ label: "PROFILE", content: text.trim() });
+  return sections;
+}
+
+function buildTranscript() {
+  return state.messages
+    .filter(m => !m.hidden)
+    .map(m => (m.role === "assistant" ? "COACH: " : "CLIENT: ") + m.content)
+    .join("\n\n");
+}
+
+function apiMessages() {
+  return state.messages.map(m => ({ role: m.role, content: m.content }));
+}
+
+function userTurnCount() {
+  return state.messages.filter(m => m.role === "user" && !m.hidden).length;
+}
+
+// ── Render helpers ───────────────────────────────────────────────────
+function makeFlagEl(flag) {
+  const div = document.createElement("div");
+  div.className = "flag " + (flag.type === "assumption" ? "flag-assumption" : "flag-tension");
+  const label = document.createElement("span");
+  label.className = "flag-label";
+  label.textContent = flag.type === "assumption" ? "ASSUMPTION" : "TENSION";
+  const txt = document.createElement("span");
+  txt.className = "flag-text";
+  txt.textContent = flag.text;
+  div.appendChild(label);
+  div.appendChild(txt);
+  return div;
+}
+
+function appendMessage(role, content) {
+  const inner = el("messages-inner");
+  const typing = el("typing");
+
+  const wrap = document.createElement("div");
+  wrap.className = "msg " + (role === "assistant" ? "msg-coach" : "msg-user");
+
+  const labelDiv = document.createElement("div");
+  labelDiv.className = "msg-label";
+  labelDiv.textContent = role === "assistant" ? "Coach" : "You";
+  wrap.appendChild(labelDiv);
+
+  if (role === "assistant") {
+    const parsed = parseTensions(content);
+    parsed.tensions.forEach(f => wrap.appendChild(makeFlagEl(f)));
+    const p = document.createElement("p");
+    p.textContent = parsed.cleaned;
+    wrap.appendChild(p);
+  } else {
+    const p = document.createElement("p");
+    p.textContent = content;
+    wrap.appendChild(p);
+  }
+
+  inner.insertBefore(wrap, typing);
+  scrollToBottom();
+}
+
+function appendNotice(text, withBack) {
+  const inner = el("messages-inner");
+  const typing = el("typing");
+  const wrap = document.createElement("div");
+  wrap.className = "msg notice";
+  const p = document.createElement("p");
+  p.textContent = text;
+  wrap.appendChild(p);
+  if (withBack) {
+    wrap.appendChild(makeBtn("Back to start", "btn-ghost notice-btn", showIntro));
+  }
+  inner.insertBefore(wrap, typing);
+  scrollToBottom();
+}
+
+function clearNotices() {
+  el("messages-inner").querySelectorAll(".notice").forEach(n => n.remove());
+}
+
+function renderAllMessages() {
+  el("messages-inner").querySelectorAll(".msg").forEach(n => n.remove());
+  state.messages.forEach(m => {
+    if (m.hidden) return;
+    appendMessage(m.role, m.content);
+  });
+}
+
+function updatePhaseBar() {
+  const bar = el("phase-bar");
+  bar.innerHTML = "";
+  const currentIdx = PHASES.findIndex(p => p.id === state.currentPhaseId);
+  PHASES.forEach((p, i) => {
+    const crumb = document.createElement("span");
+    crumb.className = "phase-crumb";
+
+    const label = document.createElement("span");
+    label.className = "phase-crumb-label";
+    if (i < currentIdx) label.classList.add("done");
+    else if (i === currentIdx) label.classList.add("active");
+    label.textContent = (i < currentIdx ? "done" : p.n + ".") + " " + p.label;
+    crumb.appendChild(label);
+
+    if (i < PHASES.length - 1) {
+      const sep = document.createElement("span");
+      sep.className = "phase-sep";
+      sep.textContent = ">";
+      crumb.appendChild(sep);
+    }
+    bar.appendChild(crumb);
+  });
+}
+
+function setLoading(on) {
+  busy = on;
+  el("typing").classList.toggle("visible", on);
+  el("btn-send").disabled = on;
+  el("user-input").disabled = on;
+  el("btn-notes").disabled = on;
+  el("btn-synth-now").disabled = on;
+  if (on) scrollToBottom();
+}
+
+function updateSendButton() {
+  const hasText = el("user-input").value.trim().length > 0;
+  el("btn-send").classList.toggle("ready", hasText && !state.readyForSynthesis);
+}
+
+// ── API ──────────────────────────────────────────────────────────────
+async function callAPI(messages, systemPrompt, maxTokens) {
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: getApiHeaders(),
+    body: JSON.stringify({
+      model: "claude-sonnet-4-6",
+      max_tokens: maxTokens || 1000,
+      system: systemPrompt,
+      messages: messages,
+    }),
+  });
+  if (!res.ok) {
+    const errText = await res.text().catch(() => "");
+    throw new Error("API " + res.status + ": " + errText.slice(0, 160));
+  }
+  const data = await res.json();
+  return (data.content || []).filter(b => b.type === "text").map(b => b.text).join("");
+}
+
+// ── Intro and session start ──────────────────────────────────────────
+function showIntro() {
+  showScreen("intro");
+  el("resume-block").classList.toggle("visible", userTurnCount() > 0 || state.messages.length > 0);
+  el("btn-begin").textContent = state.messages.length > 0 ? "Begin a new session" : "Begin the session";
+}
+
+function resetSessionView() {
+  el("messages-inner").querySelectorAll(".msg").forEach(n => n.remove());
+  el("synthesis-ready").classList.remove("visible");
+  el("input-bar").style.display = "";
+  el("user-input").value = "";
+  updateSendButton();
+}
+
+function resumeSession() {
+  showScreen("session");
+  resetSessionView();
+  updatePhaseBar();
+  renderAllMessages();
+  if (state.readyForSynthesis) {
+    el("synthesis-ready").classList.add("visible");
+    el("input-bar").style.display = "none";
+  }
+  scrollToBottom();
+}
+
+async function beginNew() {
+  const pasted = el("prior-notes").value.trim();
+  if (state.messages.length > 0 && !window.confirm("This replaces the session saved on this device. Continue?")) return;
+  clearState();
+  state = defaultState();
+  state.priorNotes = pasted;
+
+  showScreen("session");
+  resetSessionView();
+  updatePhaseBar();
+
+  const first = pasted
+    ? "SESSION NOTES FROM EARLIER SESSIONS:\n\n" + pasted + "\n\nRecap where we are in two or three sentences, then continue."
+    : "I am ready to start. Begin the session.";
+
+  setLoading(true);
+  try {
+    const raw = await callAPI([{ role: "user", content: first }], SYSTEM_PROMPT, 1000);
+    const t = extractTags(raw);
+    if (!t.cleaned) throw new Error("Empty reply from the API");
+    if (t.phaseId && PHASES.some(p => p.id === t.phaseId)) state.currentPhaseId = t.phaseId;
+    state.messages = [
+      { role: "user", content: first, hidden: true },
+      { role: "assistant", content: t.cleaned },
+    ];
+    saveState();
+    updatePhaseBar();
+    appendMessage("assistant", t.cleaned);
+  } catch (e) {
+    appendNotice("Could not start the session: " + e.message + ". Check your API key and connection, then go back and try again.", true);
+  } finally {
+    setLoading(false);
+  }
+}
+
+// ── Sending messages ─────────────────────────────────────────────────
+async function sendMessage() {
+  if (busy) return;
+  const input = el("user-input");
+  const text = input.value.trim();
+  if (!text || state.readyForSynthesis) return;
+
+  const lower = text.toLowerCase();
+  if (lower === "/summary") { input.value = ""; updateSendButton(); showNotes(); return; }
+  if (lower === "/synthesis") { input.value = ""; updateSendButton(); showSynthesis(); return; }
+
+  clearNotices();
+  input.value = "";
+  updateSendButton();
+  state.messages.push({ role: "user", content: text });
+  appendMessage("user", text);
+  setLoading(true);
+
+  try {
+    const raw = await callAPI(apiMessages(), SYSTEM_PROMPT, 1000);
+    const t = extractTags(raw);
+    if (!t.cleaned && !t.ready) throw new Error("Empty reply from the API");
+    if (t.phaseId && PHASES.some(p => p.id === t.phaseId)) state.currentPhaseId = t.phaseId;
+    state.exchangeCount++;
+
+    const reply = t.cleaned || "That covers all six phases.";
+    state.messages.push({ role: "assistant", content: reply });
+    appendMessage("assistant", reply);
+
+    if (t.ready) {
+      state.readyForSynthesis = true;
+      state.currentPhaseId = "synthesis";
+      el("synthesis-ready").classList.add("visible");
+      el("input-bar").style.display = "none";
+    }
+    updatePhaseBar();
+    saveState();
+  } catch (e) {
+    // Roll back so the saved conversation stays clean and the message can be resent
+    state.messages.pop();
+    const userNodes = el("messages-inner").querySelectorAll(".msg-user");
+    if (userNodes.length) userNodes[userNodes.length - 1].remove();
+    input.value = text;
+    updateSendButton();
+    appendNotice("That message did not go through (" + e.message + "). Your text is back in the box, tap Send to retry.", false);
+  } finally {
+    setLoading(false);
+    input.focus();
+  }
+}
+
+// ── Session notes (/summary) ─────────────────────────────────────────
+async function showNotes() {
+  if (userTurnCount() === 0) {
+    appendNotice("Nothing to save yet. Answer at least one question first.", false);
+    return;
+  }
+  showScreen("notes");
+  const body = el("notes-body");
+  body.innerHTML = '<div class="spinner-wrap"><div class="spinner"></div><p>Writing your session notes...</p></div>';
+
+  const content =
+    (state.priorNotes ? "EARLIER SESSION NOTES:\n\n" + state.priorNotes + "\n\n" : "") +
+    "THIS SESSION TRANSCRIPT:\n\n" + buildTranscript() +
+    "\n\nProduce the session notes.";
+
+  try {
+    const text = await callAPI([{ role: "user", content: content }], NOTES_PROMPT, 3000);
+    state.notes = text;
+    saveState();
+    renderNotes(text);
+  } catch (e) {
+    body.innerHTML = "";
+    const p = document.createElement("p");
+    p.className = "error-text";
+    p.textContent = "Could not write the notes: " + e.message;
+    body.appendChild(p);
+    const row = document.createElement("div");
+    row.className = "btn-row";
+    row.appendChild(makeBtn("Retry", "btn-primary", showNotes));
+    row.appendChild(makeBtn("Back to session", "btn-ghost", resumeSession));
+    body.appendChild(row);
+  }
+}
+
+function renderNotes(text) {
+  const body = el("notes-body");
+  body.innerHTML = "";
+
+  const hint = document.createElement("p");
+  hint.className = "notes-hint";
+  hint.textContent = "Copy these into a private place (Bitwarden secure note, a local file). Next time, paste them into the box on the start screen. They are not uploaded anywhere except this one request to the API.";
+  body.appendChild(hint);
+
+  const pre = document.createElement("div");
+  pre.className = "notes-text";
+  pre.textContent = text;
+  body.appendChild(pre);
+
+  const row = document.createElement("div");
+  row.className = "btn-row";
+  const copyBtn = makeBtn("Copy notes", "btn-primary", () => copyText(text, copyBtn, "Copy notes"));
+  row.appendChild(copyBtn);
+  row.appendChild(makeBtn("Back to session", "btn-ghost", resumeSession));
+  body.appendChild(row);
+}
+
+// ── Synthesis ────────────────────────────────────────────────────────
+async function showSynthesis() {
+  if (userTurnCount() === 0) {
+    appendNotice("Nothing to synthesise yet. Answer at least one question first.", false);
+    return;
+  }
+  showScreen("synthesis");
+  const body = el("synth-body");
+
+  if (state.synthesis && state.synthesisAt === state.messages.length) {
+    renderSynthesis(state.synthesis);
+    return;
+  }
+
+  body.innerHTML = '<div class="spinner-wrap"><div class="spinner"></div><p>Reviewing everything so far...</p></div>';
+
+  const content =
+    (state.priorNotes ? "EARLIER SESSION NOTES:\n\n" + state.priorNotes + "\n\n" : "") +
+    "LATEST SESSION TRANSCRIPT:\n\n" + buildTranscript() +
+    "\n\nProduce the skills profile.";
+
+  try {
+    const text = await callAPI([{ role: "user", content: content }], SYNTHESIS_PROMPT, 4000);
+    state.synthesis = text;
+    state.synthesisAt = state.messages.length;
+    saveState();
+    renderSynthesis(text);
+  } catch (e) {
+    body.innerHTML = "";
+    const p = document.createElement("p");
+    p.className = "error-text";
+    p.textContent = "Could not produce the profile: " + e.message;
+    body.appendChild(p);
+    const row = document.createElement("div");
+    row.className = "btn-row";
+    row.appendChild(makeBtn("Retry", "btn-primary", showSynthesis));
+    row.appendChild(makeBtn("Back to session", "btn-ghost", resumeSession));
+    body.appendChild(row);
+  }
+}
+
+function renderSynthesis(text) {
+  const body = el("synth-body");
+  const sections = parseSynthesisSections(text);
+
+  body.innerHTML = "";
+  const wrap = document.createElement("div");
+  wrap.className = "synth-sections";
+
+  sections.forEach((s, i) => {
+    const div = document.createElement("div");
+    div.className = "synth-section" + (i === 0 ? " highlight" : "");
+
+    const label = document.createElement("div");
+    label.className = "synth-section-label";
+    label.textContent = s.label;
+
+    const content = document.createElement("div");
+    content.className = "synth-section-content";
+    content.textContent = s.content;
+
+    div.appendChild(label);
+    div.appendChild(content);
+    wrap.appendChild(div);
+  });
+
+  const note = document.createElement("div");
+  note.className = "synth-note";
+  const np = document.createElement("p");
+  np.textContent = "Treat anything graded Plausible or Unverified as a hypothesis to test, not a conclusion. This profile only reflects what you told the coach. Save it somewhere private before closing this tab.";
+  note.appendChild(np);
+
+  const actions = document.createElement("div");
+  actions.className = "synth-actions";
+  const copyBtn = makeBtn("Copy profile", "btn-primary", () => copyText(text, copyBtn, "Copy profile"));
+  actions.appendChild(copyBtn);
+  actions.appendChild(makeBtn("Back to session", "btn-ghost", resumeSession));
+  actions.appendChild(makeBtn("Start again", "btn-ghost", restart));
+
+  wrap.appendChild(note);
+  wrap.appendChild(actions);
+  body.appendChild(wrap);
+}
+
+// ── Restart ──────────────────────────────────────────────────────────
+function restart() {
+  if (!window.confirm("This clears the session saved on this device. Make sure you have copied your notes or profile first. Continue?")) return;
+  clearState();
+  state = defaultState();
+  resetSessionView();
+  el("prior-notes").value = "";
+  showIntro();
+}
+
+// ── Password ─────────────────────────────────────────────────────────
+const PASSPHRASE = "DiscoverYourPassion";
+const AUTH_KEY   = "deep-coach-auth-v1";
+
+function checkAuth() {
+  try { return localStorage.getItem(AUTH_KEY) === "1"; } catch (e) { return false; }
+}
+function setAuth() {
+  try { localStorage.setItem(AUTH_KEY, "1"); } catch (e) {}
+}
+
+function initPassword() {
+  const input = el("password-input");
+  const errEl = el("password-error");
+
+  function attempt() {
+    if (input.value === PASSPHRASE) {
+      setAuth();
+      errEl.classList.remove("visible");
+      showScreen("apikey");
+      setTimeout(() => { if (el("apikey-input")) el("apikey-input").focus(); }, 100);
+    } else {
+      input.value = "";
+      errEl.classList.add("visible");
+      input.focus();
+    }
+  }
+
+  el("btn-unlock").addEventListener("click", attempt);
+  input.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") attempt();
+  });
+  setTimeout(() => input.focus(), 100);
+}
+
+// ── API key entry ────────────────────────────────────────────────────
+function initApiKey() {
+  const input = el("apikey-input");
+  const errEl = el("apikey-error");
+
+  function attempt() {
+    const val = input.value.trim();
+    if (!val.startsWith("sk-ant-") || val.length < 20) {
+      errEl.classList.add("visible");
+      input.focus();
+      return;
+    }
+    runtimeApiKey = val;
+    errEl.classList.remove("visible");
+    input.value = "";
+    showIntro();
+  }
+
+  el("btn-apikey-submit").addEventListener("click", attempt);
+  input.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") attempt();
+  });
+}
+
+// ── Intro phase list ─────────────────────────────────────────────────
+function buildIntroPhaseList() {
+  const list = el("phase-list-intro");
+  PHASES.filter(p => p.id !== "synthesis").forEach(p => {
+    const item = document.createElement("div");
+    item.className = "phase-item";
+    const num = document.createElement("span");
+    num.className = "phase-num";
+    num.textContent = p.n;
+    const name = document.createElement("span");
+    name.className = "phase-name";
+    name.textContent = p.label;
+    item.appendChild(num);
+    item.appendChild(name);
+    list.appendChild(item);
+  });
+}
+
+// ── Event listeners ──────────────────────────────────────────────────
+el("btn-begin").addEventListener("click", () => beginNew());
+el("btn-resume").addEventListener("click", () => resumeSession());
+el("btn-send").addEventListener("click", () => sendMessage());
+el("btn-notes").addEventListener("click", () => showNotes());
+el("btn-synth-now").addEventListener("click", () => showSynthesis());
+el("btn-go-synth").addEventListener("click", () => showSynthesis());
+
+el("user-input").addEventListener("input", updateSendButton);
+el("user-input").addEventListener("keydown", function (e) {
+  if (e.key === "Enter" && !e.shiftKey && window.innerWidth > 768) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+
+// ── Init ─────────────────────────────────────────────────────────────
+buildIntroPhaseList();
+loadState();
+initPassword();
+initApiKey();
+
+if (checkAuth()) {
+  showScreen("apikey");
+  setTimeout(() => { if (el("apikey-input")) el("apikey-input").focus(); }, 100);
+}
+
+</script>
+</body>
+</html>
